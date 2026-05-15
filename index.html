@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pi Task Market</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f0a1e">
+  <style>
+    :root {
+      --bg: #0f0a1e;
+      --bg2: #1a1030;
+      --card: #1e1535;
+      --card2: #261c42;
+      --border: #2e2250;
+      --purple: #7c3aed;
+      --purple-light: #9d5cf6;
+      --purple-glow: rgba(124,58,237,0.35);
+      --gold: #f59e0b;
+      --gold-light: #fbbf24;
+      --text: #f0ebff;
+      --text2: #a89ec9;
+      --text3: #6b5f8a;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+    }
+
+    /* ========= BACKGROUND ========= */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% 0%, rgba(124,58,237,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 90% 100%, rgba(245,158,11,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* ========= HEADER ========= */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(15,10,30,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+    }
+    .header-top { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .logo-icon {
+      width:38px; height:38px;
+      background: linear-gradient(135deg, var(--purple), var(--purple-light));
+      border-radius:12px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px; font-weight:900; color:white;
+      box-shadow: 0 4px 16px var(--purple-glow);
+    }
+    .logo-text { font-weight:800; font-size:17px; color:var(--text); }
+    .logo-text span { color:var(--gold); }
+
+    .header-actions { display:flex; align-items:center; gap:8px; }
+
+    /* Language Switcher */
+    .lang-switcher {
+      display:flex; align-items:center; gap:4px;
+      background: var(--card2); border:1px solid var(--border);
+      border-radius:20px; padding:3px;
+    }
+    .lang-btn {
+      padding:5px 10px; border-radius:16px; border:none;
+      font-family:'Cairo',sans-serif; font-size:12px; font-weight:700;
+      cursor:pointer; transition:all 0.2s; color:var(--text2);
+      background:transparent;
+    }
+    .lang-btn.active {
+      background: linear-gradient(135deg, var(--purple), var(--purple-light));
+      color:white;
+      box-shadow: 0 2px 8px var(--purple-glow);
+    }
+
+    .user-badge {
+      display:flex; align-items:center; gap:8px;
+      background: var(--card2); border:1px solid var(--border);
+      padding:7px 14px; border-radius:20px;
+      font-size:13px; font-weight:700; cursor:pointer;
+      color:var(--text); transition:all 0.2s;
+    }
+    .user-badge:hover { border-color:var(--purple); }
+    .user-avatar {
+      width:22px; height:22px;
+      background: linear-gradient(135deg, var(--gold), #f97316);
+      border-radius:50%; display:flex; align-items:center; justify-content:center;
+      font-size:11px; color:white; font-weight:800;
+    }
+
+    .signin-btn {
+      background: linear-gradient(135deg, var(--purple), var(--purple-light));
+      color:white; border:none; padding:8px 18px; border-radius:20px;
+      font-family:'Cairo',sans-serif; font-weight:700; font-size:13px;
+      cursor:pointer; box-shadow:0 2px 12px var(--purple-glow);
+      transition:all 0.2s;
+    }
+    .signin-btn:hover { transform:translateY(-1px); box-shadow:0 4px 20px var(--purple-glow); }
+
+    /* ========= AUTH OVERLAY ========= */
+    .auth-overlay {
+      position:fixed; inset:0;
+      background: rgba(10,6,22,0.97);
+      z-index:1000;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      padding:30px; text-align:center;
+    }
+    .auth-overlay.hidden { display:none; }
+    .auth-glow {
+      width:120px; height:120px;
+      background: linear-gradient(135deg, var(--purple), var(--purple-light));
+      border-radius:32px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:56px; font-weight:900; color:white;
+      margin-bottom:28px;
+      box-shadow: 0 0 60px var(--purple-glow), 0 0 100px rgba(124,58,237,0.15);
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform:translateY(0); }
+      50% { transform:translateY(-8px); }
+    }
+    .auth-overlay h2 { font-size:28px; font-weight:900; margin-bottom:10px; }
+    .auth-overlay p { color:var(--text2); margin-bottom:32px; font-size:15px; line-height:1.7; }
+    .auth-btn {
+      background: linear-gradient(135deg, var(--gold), #f97316);
+      color:white; border:none; padding:16px 48px; border-radius:14px;
+      font-family:'Cairo',sans-serif; font-weight:800; font-size:17px;
+      cursor:pointer; width:100%; max-width:320px;
+      box-shadow: 0 4px 24px rgba(245,158,11,0.35);
+      transition:all 0.2s;
+    }
+    .auth-btn:active { transform:scale(0.97); }
+    .auth-btn:disabled { opacity:0.6; }
+    .auth-status { margin-top:16px; font-size:13px; color:var(--text2); min-height:20px; }
+
+    /* ========= STATS ========= */
+    .stats-bar {
+      display:grid; grid-template-columns:repeat(3,1fr);
+      gap:10px; padding:16px 16px 0;
+      position:relative; z-index:1;
+    }
+    .stat-card {
+      background: var(--card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:14px 12px;
+      text-align:center; transition:all 0.2s;
+    }
+    .stat-card:hover { border-color:var(--purple); transform:translateY(-2px); }
+    .stat-value { font-size:24px; font-weight:900; color:var(--purple-light); font-family:'Space Mono',monospace; }
+    .stat-label { font-size:11px; color:var(--text2); margin-top:4px; }
+
+    /* ========= SEARCH + TABS ========= */
+    .search-wrap { padding:16px 16px 0; position:relative; z-index:1; }
+    .search-input {
+      width:100%; padding:13px 18px 13px 44px;
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--radius); color:var(--text);
+      font-family:'Cairo',sans-serif; font-size:14px;
+      outline:none; transition:border-color 0.2s;
+    }
+    html[dir="rtl"] .search-input { padding:13px 44px 13px 18px; }
+    .search-input:focus { border-color:var(--purple); }
+    .search-input::placeholder { color:var(--text3); }
+    .search-icon {
+      position:absolute; left:30px; top:50%; transform:translateY(-50%);
+      color:var(--text3); font-size:16px; pointer-events:none;
+    }
+    html[dir="rtl"] .search-icon { left:auto; right:30px; }
+
+    .tabs {
+      display:flex; gap:8px;
+      padding:14px 16px 0;
+      overflow-x:auto; scrollbar-width:none;
+      position:relative; z-index:1;
+    }
+    .tabs::-webkit-scrollbar { display:none; }
+    .tab {
+      flex-shrink:0; padding:9px 18px;
+      border-radius:20px; border:1px solid var(--border);
+      background:var(--card); color:var(--text2);
+      font-family:'Cairo',sans-serif; font-weight:700; font-size:13px;
+      cursor:pointer; transition:all 0.2s; white-space:nowrap;
+    }
+    .tab:hover { border-color:var(--purple-light); color:var(--purple-light); }
+    .tab.active {
+      background: linear-gradient(135deg, var(--purple), var(--purple-light));
+      color:white; border-color:transparent;
+      box-shadow:0 2px 12px var(--purple-glow);
+    }
+
+    /* ========= FAB ========= */
+    .fab {
+      position:fixed; bottom:24px;
+      width:58px; height:58px;
+      background: linear-gradient(135deg, var(--purple), var(--purple-light));
+      color:white; border:none; border-radius:18px; font-size:26px;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 6px 24px var(--purple-glow);
+      cursor:pointer; z-index:50; transition:all 0.2s;
+    }
+    html[dir="rtl"] .fab { left:20px; }
+    html[dir="ltr"] .fab { right:20px; }
+    .fab:active { transform:scale(0.92); }
+
+    /* ========= TASKS ========= */
+    .tasks-container { padding:14px 16px 100px; position:relative; z-index:1; }
+
+    .task-card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:18px;
+      margin-bottom:12px; transition:all 0.25s;
+      position:relative; overflow:hidden;
+    }
+    .task-card::before {
+      content:''; position:absolute; inset:0;
+      background: linear-gradient(135deg, var(--purple-glow), transparent 60%);
+      opacity:0; transition:opacity 0.3s;
+    }
+    .task-card:hover { border-color:var(--purple); transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,0,0,0.3); }
+    .task-card:hover::before { opacity:1; }
+
+    .task-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px; gap:10px; }
+    .task-title { font-weight:700; font-size:15px; line-height:1.6; flex:1; color:var(--text); }
+
+    .task-price {
+      display:flex; align-items:center; gap:5px;
+      background: rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.25);
+      padding:6px 12px; border-radius:20px;
+      font-weight:800; font-size:14px; color:var(--gold);
+      white-space:nowrap;
+    }
+    .pi-sym {
+      width:18px; height:18px;
+      background: linear-gradient(135deg, var(--purple), var(--purple-light));
+      border-radius:50%; display:flex; align-items:center; justify-content:center;
+      font-size:10px; color:white; font-weight:900;
+    }
+
+    .task-desc { color:var(--text2); font-size:13px; line-height:1.7; margin-bottom:14px; }
+
+    .task-meta { display:flex; align-items:center; justify-content:space-between; }
+    .task-author { display:flex; align-items:center; gap:8px; }
+    .author-avatar {
+      width:30px; height:30px;
+      background: linear-gradient(135deg, var(--purple), var(--purple-light));
+      border-radius:10px; display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:12px; color:white;
+    }
+    .author-name { font-size:12px; font-weight:600; color:var(--text2); }
+
+    .task-category {
+      font-size:11px; padding:4px 12px;
+      border-radius:12px; border:1px solid var(--border);
+      color:var(--text3); background:var(--card2);
+    }
+
+    .task-actions { display:flex; gap:8px; margin-top:14px; }
+
+    .btn-primary {
+      flex:1; background: linear-gradient(135deg, var(--purple), var(--purple-light));
+      color:white; border:none; padding:12px; border-radius:var(--radius-sm);
+      font-family:'Cairo',sans-serif; font-weight:700; font-size:13px;
+      cursor:pointer; transition:all 0.2s;
+      box-shadow:0 2px 10px var(--purple-glow);
+    }
+    .btn-primary:hover { opacity:0.9; transform:translateY(-1px); }
+    .btn-primary:disabled { background:var(--card2); color:var(--text3); box-shadow:none; cursor:not-allowed; transform:none; }
+
+    .btn-secondary {
+      padding:12px 16px; background:var(--card2); color:var(--text2);
+      border:1px solid var(--border); border-radius:var(--radius-sm);
+      font-family:'Cairo',sans-serif; font-weight:600; font-size:13px;
+      cursor:pointer; transition:all 0.2s;
+    }
+    .btn-secondary:hover { border-color:var(--purple-light); color:var(--text); }
+
+    .btn-danger {
+      padding:12px 14px; background:rgba(239,68,68,0.1); color:var(--danger);
+      border:1px solid rgba(239,68,68,0.25); border-radius:var(--radius-sm);
+      font-family:'Cairo',sans-serif; font-weight:600; font-size:13px; cursor:pointer;
+      transition:all 0.2s;
+    }
+    .btn-danger:hover { background:rgba(239,68,68,0.2); }
+
+    .my-task-badge {
+      font-size:11px; padding:3px 10px; border-radius:10px;
+      background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.25);
+      color:var(--success);
+    }
+
+    /* ========= MODALS ========= */
+    .modal-overlay {
+      position:fixed; inset:0;
+      background:rgba(0,0,0,0.7); backdrop-filter:blur(8px);
+      z-index:200; display:flex; align-items:flex-end; justify-content:center;
+      opacity:0; pointer-events:none; transition:opacity 0.3s;
+    }
+    .modal-overlay.active { opacity:1; pointer-events:all; }
+    .modal {
+      background:var(--bg2); width:100%; max-width:540px;
+      border-radius:24px 24px 0 0; padding:24px;
+      border:1px solid var(--border); border-bottom:none;
+      transform:translateY(100%); transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      max-height:90vh; overflow-y:auto;
+    }
+    .modal-overlay.active .modal { transform:translateY(0); }
+
+    .modal-handle {
+      width:40px; height:4px; border-radius:2px;
+      background:var(--border); margin:0 auto 20px;
+    }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+    .modal-title { font-size:20px; font-weight:900; }
+    .modal-close {
+      width:36px; height:36px; border-radius:10px;
+      border:1px solid var(--border); background:var(--card2);
+      font-size:18px; cursor:pointer; color:var(--text2);
+      display:flex; align-items:center; justify-content:center; transition:all 0.2s;
+    }
+    .modal-close:hover { border-color:var(--danger); color:var(--danger); }
+
+    /* Forms */
+    .form-group { margin-bottom:16px; }
+    .form-label { display:block; font-size:12px; font-weight:700; margin-bottom:7px; color:var(--text2); text-transform:uppercase; letter-spacing:0.05em; }
+    .form-input, .form-select, .form-textarea {
+      width:100%; padding:13px 16px;
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--radius-sm); color:var(--text);
+      font-family:'Cairo',sans-serif; font-size:14px;
+      outline:none; transition:border-color 0.2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--purple); }
+    .form-input::placeholder, .form-textarea::placeholder { color:var(--text3); }
+    .form-select { appearance:none; cursor:pointer; }
+    .form-select option { background:var(--bg2); }
+    .form-textarea { min-height:100px; resize:vertical; }
+    .char-count { font-size:11px; color:var(--text3); text-align:end; margin-top:4px; }
+
+    .form-submit {
+      width:100%; background: linear-gradient(135deg, var(--purple), var(--purple-light));
+      color:white; border:none; padding:15px; border-radius:var(--radius-sm);
+      font-family:'Cairo',sans-serif; font-weight:800; font-size:16px;
+      cursor:pointer; margin-top:8px; transition:all 0.2s;
+      box-shadow:0 4px 20px var(--purple-glow);
+    }
+    .form-submit:disabled { opacity:0.6; cursor:not-allowed; }
+
+    /* Payment */
+    .payment-task-info {
+      background:var(--card2); border:1px solid var(--border);
+      border-radius:var(--radius-sm); padding:14px; margin-bottom:16px;
+    }
+    .payment-task-info .t { font-size:11px; color:var(--text3); margin-bottom:4px; }
+    .payment-task-info .v { font-weight:700; font-size:15px; }
+
+    .payment-rows { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; margin-bottom:16px; }
+    .pay-row { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid var(--border); font-size:14px; }
+    .pay-row:last-child { border-bottom:none; }
+    .pay-row.total { background:rgba(124,58,237,0.1); }
+    .pay-row.total span { font-weight:800; font-size:16px; color:var(--purple-light); }
+
+    /* Toast */
+    .toast {
+      position:fixed; top:80px; left:50%;
+      transform:translateX(-50%) translateY(-130px);
+      background:var(--card2); border:1px solid var(--border);
+      color:var(--text); padding:13px 22px; border-radius:14px;
+      font-weight:700; font-size:13px; z-index:500;
+      transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      white-space:nowrap; max-width:90vw; text-align:center;
+      backdrop-filter:blur(20px);
+    }
+    .toast.show { transform:translateX(-50%) translateY(0); }
+    .toast.success { background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.4); color:#6ee7b7; }
+    .toast.error { background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.4); color:#fca5a5; }
+
+    /* Empty */
+    .empty-state { text-align:center; padding:60px 20px; color:var(--text2); }
+    .empty-state .icon { font-size:56px; margin-bottom:16px; opacity:0.4; }
+    .empty-state h3 { font-size:18px; margin-bottom:8px; color:var(--text); }
+
+    /* Loading */
+    .loading { display:flex; align-items:center; justify-content:center; padding:50px; color:var(--text2); gap:12px; font-size:14px; }
+    .spinner {
+      width:22px; height:22px;
+      border:2px solid var(--border); border-top-color:var(--purple);
+      border-radius:50%; animation:spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* Confirm Modal */
+    .confirm-modal {
+      position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(8px);
+      z-index:300; display:flex; align-items:center; justify-content:center;
+      padding:24px; opacity:0; pointer-events:none; transition:opacity 0.2s;
+    }
+    .confirm-modal.active { opacity:1; pointer-events:all; }
+    .confirm-box {
+      background:var(--bg2); border:1px solid var(--border);
+      border-radius:20px; padding:28px; max-width:360px; width:100%;
+      text-align:center; transform:scale(0.9); transition:transform 0.2s;
+    }
+    .confirm-modal.active .confirm-box { transform:scale(1); }
+    .confirm-icon { font-size:44px; margin-bottom:14px; }
+    .confirm-box h3 { font-size:19px; margin-bottom:8px; }
+    .confirm-box p { color:var(--text2); font-size:14px; margin-bottom:22px; }
+    .confirm-btns { display:flex; gap:10px; }
+    .confirm-btns button { flex:1; padding:12px; border-radius:12px; font-family:'Cairo',sans-serif; font-weight:700; font-size:14px; cursor:pointer; transition:all 0.2s; border:none; }
+    .confirm-cancel { background:var(--card2); color:var(--text2); }
+    .confirm-ok { background: linear-gradient(135deg, var(--danger), #dc2626); color:white; }
+
+    /* Install btn */
+    .install-btn {
+      position:fixed; top:80px; z-index:90;
+      background:var(--card2); border:1px solid var(--border);
+      color:var(--text); padding:9px 16px; border-radius:20px;
+      font-family:'Cairo',sans-serif; font-weight:700; font-size:12px;
+      cursor:pointer; display:none; backdrop-filter:blur(10px);
+    }
+    html[dir="rtl"] .install-btn { left:16px; }
+    html[dir="ltr"] .install-btn { right:16px; }
+    .install-btn.show { display:block; }
+
+    /* Section title */
+    .section-title {
+      padding:14px 16px 0; font-size:13px; font-weight:700;
+      color:var(--text3); text-transform:uppercase; letter-spacing:0.08em;
+      position:relative; z-index:1;
+    }
+
+    /* Scroll bar */
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+    /* Animations */
+    .task-card { animation:fadeUp 0.3s ease both; }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(12px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <button id="installBtn" class="install-btn">📲 <span data-i18n="install"></span></button>
+
+  <!-- Auth Overlay -->
+  <div id="authOverlay" class="auth-overlay">
+    <div class="auth-glow">π</div>
+    <h2 data-i18n="auth_title"></h2>
+    <p data-i18n="auth_desc"></p>
+    <button id="authBtn" class="auth-btn" data-i18n="auth_btn"></button>
+    <div id="authStatus" class="auth-status" data-i18n="auth_loading"></div>
+  </div>
+
+  <header class="header">
+    <div class="header-top">
+      <div class="logo">
+        <div class="logo-icon">π</div>
+        <div class="logo-text">Task <span>Market</span></div>
+      </div>
+      <div class="header-actions">
+        <div class="lang-switcher">
+          <button class="lang-btn active" onclick="setLang('ar')">ع</button>
+          <button class="lang-btn" onclick="setLang('en')">EN</button>
+          <button class="lang-btn" onclick="setLang('fr')">FR</button>
+        </div>
+        <div id="userArea">
+          <button id="headerSignin" class="signin-btn" data-i18n="signin"></button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-value" id="statTasks">—</div>
+      <div class="stat-label" data-i18n="stat_tasks"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statUsers">—</div>
+      <div class="stat-label" data-i18n="stat_users"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statVolume">—</div>
+      <div class="stat-label" data-i18n="stat_volume"></div>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <input type="search" class="search-input" id="searchInput" data-i18n-placeholder="search_placeholder">
+    <span class="search-icon">🔍</span>
+  </div>
+
+  <div class="tabs" id="tabsBar">
+    <button class="tab active" data-filter="all" data-i18n="cat_all"></button>
+    <button class="tab" data-filter="design" data-i18n="cat_design"></button>
+    <button class="tab" data-filter="writing" data-i18n="cat_writing"></button>
+    <button class="tab" data-filter="dev" data-i18n="cat_dev"></button>
+    <button class="tab" data-filter="marketing" data-i18n="cat_marketing"></button>
+    <button class="tab" data-filter="other" data-i18n="cat_other"></button>
+  </div>
+
+  <div class="section-title" id="sectionTitle"></div>
+  <div id="tasksContainer" class="tasks-container"></div>
+
+  <button id="fab" class="fab" title="+">+</button>
+
+  <!-- Add Task Modal -->
+  <div id="taskModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h3 class="modal-title" data-i18n="modal_new_task"></h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="field_title"></label>
+        <input type="text" class="form-input" id="taskTitle" data-i18n-placeholder="field_title_ph" maxlength="60">
+        <div class="char-count"><span id="titleCount">0</span>/60</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="field_category"></label>
+        <select class="form-select" id="taskCategory">
+          <option value="" data-i18n="field_cat_ph"></option>
+          <option value="design" data-i18n="cat_design"></option>
+          <option value="writing" data-i18n="cat_writing"></option>
+          <option value="dev" data-i18n="cat_dev"></option>
+          <option value="marketing" data-i18n="cat_marketing"></option>
+          <option value="other" data-i18n="cat_other"></option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="field_desc"></label>
+        <textarea class="form-textarea" id="taskDesc" data-i18n-placeholder="field_desc_ph" maxlength="500"></textarea>
+        <div class="char-count"><span id="descCount">0</span>/500</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="field_price"></label>
+        <input type="number" class="form-input" id="taskPrice" data-i18n-placeholder="field_price_ph" min="0.1" step="0.1">
+      </div>
+      <button id="submitTaskBtn" class="form-submit" onclick="submitTask()" data-i18n="btn_publish"></button>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div id="paymentModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h3 class="modal-title" data-i18n="modal_pay"></h3>
+        <button class="modal-close" onclick="closePaymentModal()">✕</button>
+      </div>
+      <div class="payment-task-info">
+        <div class="t" data-i18n="pay_task_label"></div>
+        <div class="v" id="payTaskTitle">-</div>
+        <div style="margin-top:8px;" class="t" data-i18n="pay_author_label"></div>
+        <div class="v" id="payTaskAuthor">-</div>
+      </div>
+      <div class="payment-rows">
+        <div class="pay-row">
+          <span data-i18n="pay_reward"></span>
+          <span id="payTaskPrice" style="font-weight:700;color:var(--gold)">-</span>
+        </div>
+        <div class="pay-row">
+          <span data-i18n="pay_fee"></span>
+          <span id="payFee">-</span>
+        </div>
+        <div class="pay-row total">
+          <span data-i18n="pay_total"></span>
+          <span id="payTotal">-</span>
+        </div>
+      </div>
+      <button id="payBtn" class="form-submit" onclick="executePayment()" data-i18n="btn_pay"></button>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div id="confirmModal" class="confirm-modal">
+    <div class="confirm-box">
+      <div class="confirm-icon">🗑️</div>
+      <h3 data-i18n="confirm_delete_title"></h3>
+      <p data-i18n="confirm_delete_desc"></p>
+      <div class="confirm-btns">
+        <button class="confirm-cancel" onclick="closeConfirm()" data-i18n="btn_cancel"></button>
+        <button class="confirm-ok" id="confirmOkBtn" data-i18n="btn_delete"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // ==================== i18n ====================
+    const TRANSLATIONS = {
+      ar: {
+        auth_title: 'سوق مهام Pi',
+        auth_desc: 'اكسب Pi مقابل مهاراتك\nأو وظّف المواهب بـ Pi',
+        auth_btn: 'تسجيل الدخول بـ Pi',
+        auth_loading: 'جاري تهيئة Pi SDK...',
+        signin: 'تسجيل الدخول',
+        install: 'تثبيت التطبيق',
+        stat_tasks: 'مهمة نشطة',
+        stat_users: 'مستخدم',
+        stat_volume: 'Pi متداول',
+        search_placeholder: 'ابحث عن مهمة...',
+        cat_all: 'الكل', cat_design: 'تصميم', cat_writing: 'كتابة', cat_dev: 'برمجة', cat_marketing: 'تسويق', cat_other: 'أخرى',
+        modal_new_task: 'نشر مهمة جديدة',
+        modal_pay: 'دفع المكافأة',
+        field_title: 'عنوان المهمة', field_title_ph: 'مثال: تصميم شعار احترافي',
+        field_category: 'التصنيف', field_cat_ph: 'اختر التصنيف',
+        field_desc: 'الوصف', field_desc_ph: 'اشرح المهمة بالتفصيل...',
+        field_price: 'المكافأة (Pi)', field_price_ph: 'مثال: 5',
+        btn_publish: 'نشر المهمة', btn_pay: 'دفع بـ Pi', btn_cancel: 'إلغاء', btn_delete: 'حذف',
+        pay_task_label: 'المهمة', pay_author_label: 'صاحب المهمة',
+        pay_reward: 'المكافأة', pay_fee: 'رسوم المنصة (2%)', pay_total: 'الإجمالي',
+        confirm_delete_title: 'حذف المهمة', confirm_delete_desc: 'هل أنت متأكد من حذف هذه المهمة؟ لا يمكن التراجع.',
+        section_tasks: 'المهام المتاحة',
+        accept: 'قبول ودفع', contact: 'تواصل', my_task: 'مهمتي',
+        empty_title: 'لا توجد مهام', empty_desc: 'كن أول من ينشر مهمة في هذا القسم!',
+        loading: 'جاري التحميل...',
+        toast_login_req: 'يرجى تسجيل الدخول أولاً', toast_own_task: 'لا يمكنك قبول مهمتك الخاصة!',
+        toast_fill: 'يرجى ملء جميع الحقول', toast_published: 'تم نشر المهمة ✅', toast_deleted: 'تم حذف المهمة',
+        toast_paid: 'تم الدفع بنجاح! π', toast_pay_cancel: 'تم إلغاء الدفع', toast_pay_fail: 'فشل الدفع',
+        toast_welcome: 'مرحباً', toast_logout: 'تم تسجيل الخروج', toast_chat_soon: 'ميزة المحادثة قيد التطوير قريباً 🔧',
+        logout_confirm: 'تسجيل الخروج؟',
+        publishing: 'جاري النشر...', paying: 'جاري الدفع...',
+      },
+      en: {
+        auth_title: 'Pi Task Market',
+        auth_desc: 'Earn Pi for your skills\nor hire talent with Pi',
+        auth_btn: 'Sign in with Pi',
+        auth_loading: 'Initializing Pi SDK...',
+        signin: 'Sign In',
+        install: 'Install App',
+        stat_tasks: 'Active Tasks',
+        stat_users: 'Users',
+        stat_volume: 'Pi Traded',
+        search_placeholder: 'Search tasks...',
+        cat_all: 'All', cat_design: 'Design', cat_writing: 'Writing', cat_dev: 'Dev', cat_marketing: 'Marketing', cat_other: 'Other',
+        modal_new_task: 'Post New Task',
+        modal_pay: 'Pay Reward',
+        field_title: 'Task Title', field_title_ph: 'e.g. Design a professional logo',
+        field_category: 'Category', field_cat_ph: 'Select category',
+        field_desc: 'Description', field_desc_ph: 'Describe the task in detail...',
+        field_price: 'Reward (Pi)', field_price_ph: 'e.g. 5',
+        btn_publish: 'Publish Task', btn_pay: 'Pay with Pi', btn_cancel: 'Cancel', btn_delete: 'Delete',
+        pay_task_label: 'Task', pay_author_label: 'Task Owner',
+        pay_reward: 'Reward', pay_fee: 'Platform Fee (2%)', pay_total: 'Total',
+        confirm_delete_title: 'Delete Task', confirm_delete_desc: 'Are you sure you want to delete this task? This cannot be undone.',
+        section_tasks: 'Available Tasks',
+        accept: 'Accept & Pay', contact: 'Contact', my_task: 'My Task',
+        empty_title: 'No Tasks Found', empty_desc: 'Be the first to post a task in this category!',
+        loading: 'Loading...',
+        toast_login_req: 'Please sign in first', toast_own_task: "You can't accept your own task!",
+        toast_fill: 'Please fill all fields', toast_published: 'Task published ✅', toast_deleted: 'Task deleted',
+        toast_paid: 'Payment successful! π', toast_pay_cancel: 'Payment cancelled', toast_pay_fail: 'Payment failed',
+        toast_welcome: 'Welcome', toast_logout: 'Signed out', toast_chat_soon: 'Chat feature coming soon 🔧',
+        logout_confirm: 'Sign out?',
+        publishing: 'Publishing...', paying: 'Processing...',
+      },
+      fr: {
+        auth_title: 'Marché de Tâches Pi',
+        auth_desc: 'Gagnez des Pi avec vos compétences\nou recrutez des talents avec Pi',
+        auth_btn: 'Se connecter avec Pi',
+        auth_loading: 'Initialisation du SDK Pi...',
+        signin: 'Connexion',
+        install: 'Installer',
+        stat_tasks: 'Tâches Actives',
+        stat_users: 'Utilisateurs',
+        stat_volume: 'Pi Échangés',
+        search_placeholder: 'Rechercher une tâche...',
+        cat_all: 'Tout', cat_design: 'Design', cat_writing: 'Rédaction', cat_dev: 'Dev', cat_marketing: 'Marketing', cat_other: 'Autre',
+        modal_new_task: 'Publier une Tâche',
+        modal_pay: 'Payer la Récompense',
+        field_title: 'Titre de la tâche', field_title_ph: 'ex: Créer un logo professionnel',
+        field_category: 'Catégorie', field_cat_ph: 'Choisir une catégorie',
+        field_desc: 'Description', field_desc_ph: 'Décrivez la tâche en détail...',
+        field_price: 'Récompense (Pi)', field_price_ph: 'ex: 5',
+        btn_publish: 'Publier', btn_pay: 'Payer avec Pi', btn_cancel: 'Annuler', btn_delete: 'Supprimer',
+        pay_task_label: 'Tâche', pay_author_label: 'Propriétaire',
+        pay_reward: 'Récompense', pay_fee: 'Frais de plateforme (2%)', pay_total: 'Total',
+        confirm_delete_title: 'Supprimer la tâche', confirm_delete_desc: 'Êtes-vous sûr de vouloir supprimer cette tâche ?',
+        section_tasks: 'Tâches Disponibles',
+        accept: 'Accepter & Payer', contact: 'Contacter', my_task: 'Ma Tâche',
+        empty_title: 'Aucune Tâche', empty_desc: 'Soyez le premier à publier une tâche ici !',
+        loading: 'Chargement...',
+        toast_login_req: 'Veuillez vous connecter', toast_own_task: 'Vous ne pouvez pas accepter votre propre tâche !',
+        toast_fill: 'Veuillez remplir tous les champs', toast_published: 'Tâche publiée ✅', toast_deleted: 'Tâche supprimée',
+        toast_paid: 'Paiement réussi ! π', toast_pay_cancel: 'Paiement annulé', toast_pay_fail: 'Échec du paiement',
+        toast_welcome: 'Bienvenue', toast_logout: 'Déconnecté', toast_chat_soon: 'Chat bientôt disponible 🔧',
+        logout_confirm: 'Se déconnecter ?',
+        publishing: 'Publication...', paying: 'Traitement...',
+      }
+    };
+
+    let currentLang = localStorage.getItem('pi_lang') || 'ar';
+
+    function t(key) {
+      return TRANSLATIONS[currentLang]?.[key] || TRANSLATIONS['en']?.[key] || key;
+    }
+
+    function applyTranslations() {
+      const isRTL = currentLang === 'ar';
+      document.documentElement.lang = currentLang;
+      document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        el.textContent = t(key);
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        el.placeholder = t(el.dataset.i18nPlaceholder);
+      });
+
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.toLowerCase() === (currentLang === 'ar' ? 'ع' : currentLang));
+      });
+
+      // Re-render if tasks loaded
+      if (state.tasks.length) renderTasks();
+      if (document.getElementById('sectionTitle')) {
+        document.getElementById('sectionTitle').textContent = t('section_tasks');
+      }
+    }
+
+    function setLang(lang) {
+      currentLang = lang;
+      localStorage.setItem('pi_lang', lang);
+      applyTranslations();
+    }
+
+    // ==================== CONSTANTS ====================
+    const API = '';
+    const PLATFORM_FEE_PERCENT = 2;
+
+    const state = {
+      user: null, isAuthenticated: false, accessToken: null,
+      tasks: [], filter: 'all', searchQuery: '',
+      currentPaymentTask: null
+    };
+
+    let deferredInstall = null;
+    let confirmCallback = null;
+
+    const $ = id => document.getElementById(id);
+    const authOverlay = $('authOverlay');
+    const tasksContainer = $('tasksContainer');
+    const userArea = $('userArea');
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ==================== TOAST ====================
+    let toastTimer;
+    function showToast(msg, type = '') {
+      const toast = $('toast');
+      toast.textContent = msg;
+      toast.className = 'toast show' + (type ? ' ' + type : '');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+
+    // ==================== CONFIRM MODAL ====================
+    function showConfirm(cb) {
+      confirmCallback = cb;
+      $('confirmModal').classList.add('active');
+    }
+    function closeConfirm() {
+      $('confirmModal').classList.remove('active');
+      confirmCallback = null;
+    }
+    $('confirmOkBtn').addEventListener('click', () => {
+      closeConfirm();
+      if (confirmCallback) confirmCallback();
+    });
+
+    // ==================== PWA ====================
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault(); deferredInstall = e;
+      $('installBtn').classList.add('show');
+    });
+    $('installBtn').addEventListener('click', async () => {
+      if (!deferredInstall) return;
+      deferredInstall.prompt();
+      const { outcome } = await deferredInstall.userChoice;
+      if (outcome === 'accepted') $('installBtn').classList.remove('show');
+    });
+
+    // ==================== PI SDK ====================
+    function initPi() {
+      if (!window.Pi) {
+        $('authStatus').textContent = 'Pi SDK not available';
+        return;
+      }
+      try {
+        window.Pi.init({ version: '2.0', sandbox: true });
+        $('authStatus').textContent = t('auth_btn');
+        $('authBtn').disabled = false;
+      } catch (e) {
+        $('authStatus').textContent = e.message;
+      }
+    }
+
+    async function doAuthenticate() {
+      const authBtn = $('authBtn');
+      authBtn.disabled = true;
+      $('authStatus').textContent = t('auth_loading');
+      try {
+        const auth = await window.Pi.authenticate(['username'], p => console.warn('Incomplete payment:', p?.identifier));
+        if (!auth?.accessToken) throw new Error('No access token');
+        state.accessToken = auth.accessToken;
+        state.user = auth.user;
+        await validateWithBackend(auth.accessToken);
+        state.isAuthenticated = true;
+        showUserUI(auth.user);
+        authOverlay.classList.add('hidden');
+        showToast(t('toast_welcome') + ' ' + auth.user.username + '! 👋', 'success');
+        await loadTasks();
+        await loadStats();
+      } catch (err) {
+        $('authStatus').textContent = err.message || 'Auth failed';
+        authBtn.textContent = t('auth_btn');
+        authBtn.disabled = false;
+      }
+    }
+
+    async function validateWithBackend(accessToken) {
+      try {
+        const res = await fetch(API + '/api/auth/pi', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ accessToken }), credentials:'include'
+        });
+        if (!res.ok) throw new Error('Validation failed');
+        localStorage.setItem('pi_access_token', accessToken);
+        localStorage.setItem('pi_user', JSON.stringify(state.user));
+        return res.json();
+      } catch {
+        localStorage.setItem('pi_access_token', accessToken);
+        localStorage.setItem('pi_user', JSON.stringify(state.user));
+        return { success: true };
+      }
+    }
+
+    function showUserUI(user) {
+      userArea.innerHTML = `
+        <div class="user-badge" onclick="showLogoutOption()">
+          <div class="user-avatar">${escapeHtml((user.username?.[0] || 'U').toUpperCase())}</div>
+          <span>${escapeHtml(user.username)}</span>
+        </div>`;
+    }
+
+    function showLogoutOption() {
+      if (confirm(t('logout_confirm'))) logout();
+    }
+
+    async function logout() {
+      try { await fetch(API + '/api/logout', { method:'POST', credentials:'include' }); } catch {}
+      localStorage.removeItem('pi_user');
+      localStorage.removeItem('pi_access_token');
+      state.user = null; state.isAuthenticated = false;
+      userArea.innerHTML = `<button id="headerSignin" class="signin-btn" onclick="showAuth()">${t('signin')}</button>`;
+      authOverlay.classList.remove('hidden');
+      showToast(t('toast_logout'), '');
+    }
+
+    function showAuth() { authOverlay.classList.remove('hidden'); initPi(); }
+
+    $('authBtn').addEventListener('click', () => { $('authBtn').disabled = true; doAuthenticate(); });
+
+    // ==================== SEARCH ====================
+    $('searchInput').addEventListener('input', e => {
+      state.searchQuery = e.target.value.toLowerCase();
+      renderTasks();
+    });
+
+    // ==================== TASKS ====================
+    async function loadTasks() {
+      tasksContainer.innerHTML = `<div class="loading"><div class="spinner"></div>${t('loading')}</div>`;
+      try {
+        const res = await fetch(API + '/api/tasks', { credentials:'include' });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        state.tasks = data.tasks || [];
+        renderTasks();
+      } catch {
+        const saved = localStorage.getItem('pi_tasks');
+        state.tasks = saved ? JSON.parse(saved) : generateSampleTasks();
+        renderTasks();
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch(API + '/api/stats', { credentials:'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        $('statTasks').textContent = data.activeTasks;
+        $('statUsers').textContent = data.uniqueUsers;
+        $('statVolume').textContent = data.totalVolume;
+      } catch { updateStatsFromLocal(); }
+    }
+
+    function updateStatsFromLocal() {
+      const active = state.tasks.filter(t => t.status !== 'completed');
+      $('statTasks').textContent = active.length;
+      $('statUsers').textContent = new Set(state.tasks.map(t => t.author)).size;
+      $('statVolume').textContent = state.tasks
+        .filter(t => t.status === 'completed')
+        .reduce((s, t) => s + t.price, 0).toFixed(1);
+    }
+
+    function getCategoryLabel(cat) {
+      const map = { design:'cat_design', writing:'cat_writing', dev:'cat_dev', marketing:'cat_marketing', other:'cat_other' };
+      return t(map[cat] || 'cat_other');
+    }
+
+    function renderTasks() {
+      let filtered = state.filter === 'all'
+        ? state.tasks.filter(t => t.status !== 'completed')
+        : state.tasks.filter(t => t.category === state.filter && t.status !== 'completed');
+
+      if (state.searchQuery) {
+        filtered = filtered.filter(t =>
+          t.title.toLowerCase().includes(state.searchQuery) ||
+          t.desc.toLowerCase().includes(state.searchQuery) ||
+          t.author.toLowerCase().includes(state.searchQuery)
+        );
+      }
+
+      $('sectionTitle').textContent = t('section_tasks') + (filtered.length ? ` (${filtered.length})` : '');
+
+      if (!filtered.length) {
+        tasksContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📋</div>
+            <h3>${t('empty_title')}</h3>
+            <p>${t('empty_desc')}</p>
+          </div>`;
+        return;
+      }
+
+      tasksContainer.innerHTML = filtered.map((task, i) => {
+        const isMine = state.user && task.author === state.user.username;
+        return `<div class="task-card" style="animation-delay:${i * 0.05}s">
+          <div class="task-header">
+            <div class="task-title">${escapeHtml(task.title)}</div>
+            <div class="task-price"><div class="pi-sym">π</div>${task.price}</div>
+          </div>
+          <div class="task-desc">${escapeHtml(task.desc)}</div>
+          <div class="task-meta">
+            <div class="task-author">
+              <div class="author-avatar">${escapeHtml((task.authorInitial || task.author[0]).toUpperCase())}</div>
+              <div class="author-name">@${escapeHtml(task.author)}</div>
+            </div>
+            <div class="task-category">${getCategoryLabel(task.category)}</div>
+          </div>
+          <div class="task-actions">
+            ${isMine
+              ? `<button class="btn-primary" disabled>${t('my_task')}</button>
+                 <button class="btn-danger" onclick="deleteTask('${task.id}')">${t('btn_delete')}</button>`
+              : `<button class="btn-primary" onclick="acceptTask('${task.id}')">${t('accept')}</button>
+                 <button class="btn-secondary" onclick="contactAuthor('${task.author}')">${t('contact')}</button>`
+            }
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.filter = tab.dataset.filter;
+        renderTasks();
+      });
+    });
+
+    // ==================== ADD TASK ====================
+    $('fab').addEventListener('click', () => {
+      if (!state.isAuthenticated) { showToast(t('toast_login_req'), 'error'); showAuth(); return; }
+      $('taskModal').classList.add('active');
+    });
+
+    $('taskTitle').addEventListener('input', e => { $('titleCount').textContent = e.target.value.length; });
+    $('taskDesc').addEventListener('input', e => { $('descCount').textContent = e.target.value.length; });
+
+    function closeModal() {
+      $('taskModal').classList.remove('active');
+      ['taskTitle','taskDesc','taskPrice'].forEach(id => $(id).value = '');
+      $('taskCategory').value = '';
+      $('titleCount').textContent = '0';
+      $('descCount').textContent = '0';
+    }
+    $('taskModal').addEventListener('click', e => { if (e.target === $('taskModal')) closeModal(); });
+
+    async function submitTask() {
+      const title = $('taskTitle').value.trim();
+      const category = $('taskCategory').value;
+      const desc = $('taskDesc').value.trim();
+      const price = parseFloat($('taskPrice').value);
+      if (!title || !category || !desc || !price || price < 0.1) {
+        showToast(t('toast_fill'), 'error'); return;
+      }
+      const btn = $('submitTaskBtn');
+      btn.disabled = true; btn.textContent = t('publishing');
+      try {
+        const res = await fetch(API + '/api/tasks', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ title, category, desc, price }), credentials:'include'
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        state.tasks.unshift(data.task);
+      } catch {
+        const newTask = {
+          id: 'task_' + Date.now(), title, category, desc, price,
+          author: state.user?.username || 'Anonymous',
+          authorInitial: (state.user?.username?.[0] || 'A').toUpperCase(),
+          createdAt: new Date().toISOString(), status:'open'
+        };
+        state.tasks.unshift(newTask);
+        localStorage.setItem('pi_tasks', JSON.stringify(state.tasks));
+      }
+      renderTasks(); updateStatsFromLocal(); closeModal();
+      showToast(t('toast_published'), 'success');
+      btn.disabled = false; btn.textContent = t('btn_publish');
+    }
+
+    // ==================== DELETE TASK ====================
+    function deleteTask(taskId) {
+      showConfirm(async () => {
+        try { await fetch(API + '/api/tasks/' + taskId, { method:'DELETE', credentials:'include' }); } catch {}
+        state.tasks = state.tasks.filter(t => t.id !== taskId);
+        localStorage.setItem('pi_tasks', JSON.stringify(state.tasks));
+        renderTasks(); updateStatsFromLocal();
+        showToast(t('toast_deleted'), '');
+      });
+    }
+
+    // ==================== PAYMENTS ====================
+    function acceptTask(taskId) {
+      if (!state.isAuthenticated) { showToast(t('toast_login_req'), 'error'); showAuth(); return; }
+      const task = state.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      if (task.author === state.user?.username) { showToast(t('toast_own_task'), 'error'); return; }
+      openPaymentModal(task);
+    }
+
+    function openPaymentModal(task) {
+      state.currentPaymentTask = task;
+      const fee = (task.price * PLATFORM_FEE_PERCENT / 100).toFixed(2);
+      const total = (parseFloat(task.price) + parseFloat(fee)).toFixed(2);
+      $('payTaskTitle').textContent = task.title;
+      $('payTaskAuthor').textContent = '@' + task.author;
+      $('payTaskPrice').textContent = 'π ' + task.price;
+      $('payFee').textContent = 'π ' + fee;
+      $('payTotal').textContent = 'π ' + total;
+      $('paymentModal').classList.add('active');
+    }
+
+    function closePaymentModal() { $('paymentModal').classList.remove('active'); state.currentPaymentTask = null; }
+    $('paymentModal').addEventListener('click', e => { if (e.target === $('paymentModal')) closePaymentModal(); });
+
+    async function executePayment() {
+      const task = state.currentPaymentTask;
+      if (!task || !window.Pi) return;
+      const payBtn = $('payBtn');
+      payBtn.disabled = true; payBtn.textContent = t('paying');
+      try {
+        await window.Pi.createPayment({
+          amount: parseFloat(task.price),
+          memo: task.title,
+          metadata: { taskId: task.id, toUser: task.author }
+        }, {
+          onReadyForServerApproval: async (paymentId) => {
+            try { await fetch(API + '/api/payments/approve', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentId, taskId: task.id }), credentials:'include' }); } catch {}
+          },
+          onReadyForServerCompletion: async (paymentId, txid) => {
+            try {
+              await fetch(API + '/api/payments/complete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentId, txid, taskId: task.id }), credentials:'include' });
+              const t2 = state.tasks.find(x => x.id === task.id);
+              if (t2) t2.status = 'completed';
+              localStorage.setItem('pi_tasks', JSON.stringify(state.tasks));
+            } catch {}
+            showToast(t('toast_paid') + task.price + ' ✅', 'success');
+            closePaymentModal(); renderTasks(); updateStatsFromLocal();
+            payBtn.disabled = false; payBtn.textContent = t('btn_pay');
+          },
+          onCancel: () => { showToast(t('toast_pay_cancel'), 'error'); payBtn.disabled = false; payBtn.textContent = t('btn_pay'); },
+          onError: (err) => { showToast(t('toast_pay_fail') + ': ' + err.message, 'error'); payBtn.disabled = false; payBtn.textContent = t('btn_pay'); }
+        });
+      } catch (err) {
+        showToast(t('toast_pay_fail') + ': ' + err.message, 'error');
+        payBtn.disabled = false; payBtn.textContent = t('btn_pay');
+      }
+    }
+
+    function contactAuthor() { showToast(t('toast_chat_soon'), ''); }
+
+    // ==================== SAMPLE DATA ====================
+    function generateSampleTasks() {
+      return [
+        { id:'s1', title:'تصميم شعار لمتجر إلكتروني / Logo Design', desc:'شعار احترافي لمتجر تقني. بسيط وعصري. Professional logo for a tech store.', price:8, category:'design', author:'Ali_Pi', authorInitial:'A', createdAt:new Date().toISOString(), status:'open' },
+        { id:'s2', title:'ترجمة مقال / Article Translation', desc:'مقال 1500 كلمة عن الذكاء الاصطناعي. 1500 word article about AI.', price:5, category:'writing', author:'Sara_Tech', authorInitial:'S', createdAt:new Date().toISOString(), status:'open' },
+        { id:'s3', title:'إصلاح خطأ React / Fix React Bug', desc:'مشكلة useEffect تسبب loop لانهائي. useEffect causing infinite loop issue.', price:12, category:'dev', author:'Dev_Khaled', authorInitial:'K', createdAt:new Date().toISOString(), status:'open' },
+        { id:'s4', title:'إدارة تويتر / Twitter Management', desc:'2-3 تغريدات يومياً + تفاعل. 2-3 daily tweets + engagement. Crypto niche.', price:15, category:'marketing', author:'Crypto_Nora', authorInitial:'N', createdAt:new Date().toISOString(), status:'open' },
+        { id:'s5', title:'سكريبت Python / Python Script', desc:'سكريبت يجمع بيانات من API. Script to collect data from API and save to Excel.', price:10, category:'dev', author:'Py_Master', authorInitial:'P', createdAt:new Date().toISOString(), status:'open' },
+      ];
+    }
+
+    // ==================== INIT ====================
+    document.addEventListener('DOMContentLoaded', async () => {
+      applyTranslations();
+
+      const savedUser = localStorage.getItem('pi_user');
+      const savedToken = localStorage.getItem('pi_access_token');
+      if (savedUser && savedToken) {
+        try {
+          state.user = JSON.parse(savedUser);
+          state.accessToken = savedToken;
+          state.isAuthenticated = true;
+          showUserUI(state.user);
+          authOverlay.classList.add('hidden');
+          await loadTasks(); await loadStats();
+          return;
+        } catch {
+          localStorage.removeItem('pi_user');
+          localStorage.removeItem('pi_access_token');
+        }
+      }
+
+      await loadTasks();
+      updateStatsFromLocal();
+      initPi();
+    });
+  </script>
+</body>
+</html>
